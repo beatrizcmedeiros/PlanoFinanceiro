@@ -138,6 +138,28 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 		}
 	}
 	
+	public double totalInvestimentos() {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT SUM(posicao) as acumulado"
+					+ "	FROM investimento;");
+			
+			rs = st.executeQuery();
+			
+			while (rs.next())
+				return rs.getDouble("acumulado");
+			return 0;
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
 	private Investimento instanciaInvestimento(ResultSet rs) throws SQLException {
 		Investimento investimento = new Investimento();
 		

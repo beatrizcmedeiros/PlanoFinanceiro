@@ -10,7 +10,7 @@ public class Orcamento implements Serializable{
 	
 	private static final long serialVersionUID = 1L;
 	
-	private Date mesAno;
+	private String mesAno;
 	private int codDespesa;
 	private Date dataDespesa, dataPagamento;
 	private int codPagamento;
@@ -31,11 +31,11 @@ public class Orcamento implements Serializable{
 		this.situacao = situacao;
 	}
 	
-	public Date getMesAno() {
+	public String getMesAno() {
 		return mesAno;
 	}
 
-	public void setMesAno(Date mesAno) {
+	public void setMesAno(String mesAno) {
 		this.mesAno = mesAno;
 	}
 
@@ -100,21 +100,12 @@ public class Orcamento implements Serializable{
 	    return null;
 	}
 	
-	public java.sql.Date formatarMesAno(String dataDespesa, String dataPagamento) {
+	public String formatarMesAno(String dataDespesa, String dataPagamento) {
 		String[] data = dataPagamento.split("/");
 		int mes = Integer.parseInt(data[1]);
 		String dataPagamentoAux = data[1] + "/" + getAno(dataDespesa, mes);
 		
-	    SimpleDateFormat formato = new SimpleDateFormat("MM/yyyy");
-	   
-	    try {
-	    	java.util.Date utilDate = formato.parse(dataPagamentoAux);
-	        long milliseconds = utilDate.getTime();
-	        return new java.sql.Date(milliseconds);
-	    } catch (ParseException e) {
-	    	e.printStackTrace();
-	    }
-		return null;
+        return dataPagamentoAux;
 	}
 	
 	public int getAno(String dataDespesa, int mesPagamento) {
@@ -125,20 +116,23 @@ public class Orcamento implements Serializable{
 		if (mesPagamento > mesDespesa) 
 	        return calendario.get(Calendar.YEAR);
 		
-		calendario.add(Calendar.YEAR, 1);
+		calendario.add(Calendar.YEAR, 0);
         return calendario.get(Calendar.YEAR);
 	}
 	
 	public java.sql.Date formatarDataPagamento(String dataPagamento) {		
-	    SimpleDateFormat formato = new SimpleDateFormat("dd/MM");
-	    
-	    try {
-	        java.util.Date utilDate = formato.parse(dataPagamento);
-	        long milliseconds = utilDate.getTime();
-	        return new java.sql.Date(milliseconds);
-	    } catch (ParseException e) {
-	    	e.printStackTrace();
-	    }
+		SimpleDateFormat formato = new SimpleDateFormat("dd/MM");
+		Calendar cal = Calendar.getInstance();
+			    
+		try {
+		    java.util.Date utilDate = formato.parse(dataPagamento);
+		    cal.setTime(utilDate);
+		    cal.set(Calendar.YEAR, Calendar.getInstance().get(Calendar.YEAR));
+		    long milliseconds = cal.getTimeInMillis();
+		    return new java.sql.Date(milliseconds);
+		} catch (ParseException e) {
+		    e.printStackTrace();
+		}
 		return null;
 	}	
 }//class Orcamento

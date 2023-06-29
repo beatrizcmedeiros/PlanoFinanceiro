@@ -5,6 +5,8 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -124,6 +126,31 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 			DB.closeResultSet(rs);
 		}
 	}
+	
+	public double valorReceitaTotalPorMes(int mes, int ano) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT SUM(valor) as totalMes"
+					+ "	FROM renda_mensal"
+					+ " WHERE EXTRACT(MONTH FROM data) = ? AND EXTRACT(YEAR FROM data) = ?;");
+			
+			st.setInt(1, mes);
+			st.setInt(2, ano);
+			rs = st.executeQuery();
+			
+			while (rs.next()) 
+				return rs.getDouble("totalMes");
+			return 0;
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
 
 	private RendaMensal instanciaRendaMensal(ResultSet rs) throws SQLException {
 		RendaMensal receita = new RendaMensal();
@@ -134,4 +161,16 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 		
 		return receita;
 	}
+	
+	public static Date formataData(String dataString) {
+        SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd");
+
+        try {
+            java.util.Date utilDate = formato.parse(dataString);
+            java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+            return sqlDate;
+        } catch (ParseException e) {
+        	throw new DbException(e.getMessage());
+        }
+    }
 }//class RendaMensalDAO

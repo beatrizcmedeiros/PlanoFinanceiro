@@ -6,12 +6,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
 import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.Orcamento;
+import too.planofinanceiro.entidades.TabelaOrcamento;
 
 public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 	
@@ -29,7 +31,7 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 					+ "(mes_ano, cod_despesa, data_despesa, data_pagamento, cod_forma_pagamento, valor, situacao)"
 					+ "	VALUES (?, ?, ?, ?, ?, ?, ?);");
 			
-			st.setDate(1, orcamento.getMesAno());
+			st.setString(1, orcamento.getMesAno());
 			st.setInt(2, orcamento.getCodDespesa());
 			st.setDate(3, orcamento.getDataDespesa());
 			st.setDate(4, orcamento.getDataPagamento());
@@ -61,7 +63,7 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			st.setInt(3, orcamento.getCodPagamento());
 			st.setDouble(4, orcamento.getValor());
 			st.setString(5, orcamento.getSituacao());
-			st.setDate(6, orcamento.getMesAno());
+			st.setString(6, orcamento.getMesAno());
 			st.setInt(7, orcamento.getCodDespesa());
 			
 			st.executeUpdate();
@@ -134,6 +136,80 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 		}
 	}
 	
+	public List<TabelaOrcamento> buscaPorCategoriaEmes(int codCategoria, int mes, int ano){
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT o.data_despesa, EXTRACT(DAY FROM o.data_pagamento) AS dia_pagamento,"
+					+ " (SELECT descricao FROM forma_pagamento WHERE codigo = o.cod_forma_pagamento) AS descricao_pagamento,"
+					+ " d.descricao, o.valor, o.situacao"
+					+ " FROM despesa d"
+					+ " JOIN orcamento o ON d.codigo = o.cod_despesa"
+					+ " WHERE d.cod_categoria = ?"
+					+ " AND EXTRACT(MONTH FROM o.data_pagamento) = ?"
+					+ " AND EXTRACT(YEAR FROM o.data_pagamento) = ?;");
+			
+			st.setInt(1, codCategoria);
+			st.setInt(2, mes);
+			st.setInt(3, ano);
+			
+			rs = st.executeQuery();
+			
+			List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();
+			
+			while(rs.next()) 
+				lista.add(instanciaTabelaOrcamento(rs));
+			
+			return lista;
+			
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
+	public List<TabelaOrcamento> buscaCompletaPorMes() {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT o.data_despesa, EXTRACT(DAY FROM o.data_pagamento) AS dia_pagamento,"
+					+ " (SELECT descricao FROM forma_pagamento WHERE codigo = o.cod_forma_pagamento) AS descricao_pagamento,"
+					+ " d.descricao, o.valor, o.situacao"
+					+ " FROM despesa d"
+					+ " JOIN orcamento o ON d.codigo = o.cod_despesa"
+					+ " WHERE EXTRACT(MONTH FROM o.data_pagamento) = ?"
+					+ " AND EXTRACT(YEAR FROM o.data_pagamento) = ?;");
+			
+			Calendar calendario = Calendar.getInstance();
+	        int mes = calendario.get(Calendar.MONTH) + 1; 
+	        int ano = calendario.get(Calendar.YEAR);
+	        
+			st.setInt(1, mes);
+			st.setInt(2, ano);
+			
+			rs = st.executeQuery();
+			
+			List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();
+			
+			while(rs.next()) 
+				lista.add(instanciaTabelaOrcamento(rs));
+			
+			return lista;
+			
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+
 	public List<Orcamento> buscaPorData(Date data) {
 		PreparedStatement st = null;
 		ResultSet rs = null;
@@ -223,10 +299,87 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 		}
 	}
 	
+	public double valorDespesaTotalPorMes(int mes, int ano) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT SUM(valor) as totalDespesaMes"
+					+ "	FROM orcamento"
+					+ " WHERE EXTRACT(MONTH FROM data_pagamento) = ? AND EXTRACT(YEAR FROM data_pagamento) = ?;");
+
+			st.setInt(1, mes);
+			st.setInt(2, ano);
+			rs = st.executeQuery();
+			
+			while (rs.next())
+				return rs.getDouble("totalDespesaMes");
+			return 0;
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
+	public double totalPago(int mes, int ano) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT SUM(valor) as totalPago"
+					+ "	FROM orcamento"
+					+ " WHERE EXTRACT(MONTH FROM data_pagamento) = ? AND EXTRACT(YEAR FROM data_pagamento) = ?"
+					+ " AND situacao = 'Paga';");
+
+			st.setInt(1, mes);
+			st.setInt(2, ano);
+			rs = st.executeQuery();
+			
+			while (rs.next())
+				return rs.getDouble("totalPago");
+			return 0;
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
+	public double totalAPagar(int mes, int ano) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT SUM(valor) as totalAPagar"
+					+ "	FROM orcamento"
+					+ " WHERE EXTRACT(MONTH FROM data_pagamento) = ? AND EXTRACT(YEAR FROM data_pagamento) = ?"
+					+ " AND situacao is null;");
+
+			st.setInt(1, mes);
+			st.setInt(2, ano);
+			rs = st.executeQuery();
+			
+			while (rs.next())
+				return rs.getDouble("totalAPagar");
+			return 0;
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
 	private Orcamento instanciaOrcamento(ResultSet rs) throws SQLException {
 		Orcamento orcamento = new Orcamento();
 		
-		orcamento.setMesAno(rs.getDate("mes_ano"));
+		orcamento.setMesAno(rs.getString("mes_ano"));
 		orcamento.setCodDespesa(rs.getInt("cod_despesa"));
 		orcamento.setDataDespesa(rs.getDate("data_despesa"));
 		orcamento.setDataPagamento(rs.getDate("data_pagamento"));
@@ -235,6 +388,23 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 		orcamento.setSituacao(rs.getString("situacao"));
 		
 		return orcamento;
+	}
+	
+	private TabelaOrcamento instanciaTabelaOrcamento(ResultSet rs) throws SQLException {
+		TabelaOrcamento tabelaOrcamento = new TabelaOrcamento();
+		
+		tabelaOrcamento.setData(rs.getDate("data_despesa"));
+		tabelaOrcamento.setDia(rs.getInt("dia_pagamento"));
+		tabelaOrcamento.setTipo(rs.getString("descricao_pagamento"));
+		tabelaOrcamento.setDescricao(rs.getString("descricao"));
+		tabelaOrcamento.setValor(rs.getDouble("valor"));
+		
+		if(rs.getString("situacao") == "Paga")
+			tabelaOrcamento.setPaga(true);
+		else
+			tabelaOrcamento.setPaga(false);
+			
+		return tabelaOrcamento;
 	}
 
 }//class OrcamentoDaoJDBC

@@ -148,6 +148,35 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 		}
 	}
 	
+	
+	public List<String> listaDescricoes() {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT descricao"
+					+ "	FROM categoria;");
+			
+			rs = st.executeQuery();
+			
+			List<String> lista = new ArrayList<String>();
+			
+			lista.add("Todas");
+			
+			while(rs.next()) 
+				lista.add(rs.getString("descricao"));
+			
+			return lista;
+			
+		}catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
 	private Categoria instanciaCategoria(ResultSet rs) throws SQLException {
 		Categoria categoria = new Categoria();
 		
