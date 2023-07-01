@@ -5,6 +5,8 @@ import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import mos.io.InputOutput;
+
 public class RendaMensal implements Serializable{
 	
 	private static final long serialVersionUID = 1L;
@@ -54,7 +56,7 @@ public class RendaMensal implements Serializable{
 	        long milliseconds = utilDate.getTime();
 	        return new java.sql.Date(milliseconds);
 	    } catch (ParseException e) {
-	        e.printStackTrace();
+	    	InputOutput.showError("Erro ao formatar data.", "Renda Mensal");
 	    }
 	    return null;
 	}

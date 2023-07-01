@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
+import mos.io.InputOutput;
+
 public class DB {
 	
 	private static Connection conn = null; 
@@ -22,7 +24,8 @@ public class DB {
 			props.load(fs);
 			return props;
 		}catch (IOException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Banco de Dados: Propriedades");
+			return null;
 		}
 	}
 	
@@ -34,7 +37,8 @@ public class DB {
 				String url = props.getProperty("dburl");
 				conn = DriverManager.getConnection(url, props);	//Instância um objeto do tipo conection.
 			}catch (SQLException e) {
-				throw new DbException(e.getMessage());
+				InputOutput.showError(e.getMessage(), "Banco de Dados: Abrir Conexão");
+				return null;
 			}
 			
 		}
@@ -47,7 +51,7 @@ public class DB {
 			try {
 				conn.close();
 			}catch (SQLException e) {
-				throw new DbException(e.getMessage());
+				InputOutput.showError(e.getMessage(), "Banco de Dados: Fechar Conexão");
 			}
 		}
 	}
@@ -58,7 +62,7 @@ public class DB {
 			try {
 				st.close();
 			} catch (SQLException e) {
-				throw new DbException(e.getMessage());
+				InputOutput.showError(e.getMessage(), "Fecha Objeto: Statement");
 			}
 		}
 	}
@@ -69,7 +73,7 @@ public class DB {
 			try {
 				rs.close();
 			} catch (SQLException e) {
-				throw new DbException(e.getMessage());
+				InputOutput.showError(e.getMessage(), "Fecha Objeto: ResultSet");
 			}
 		}
 	}

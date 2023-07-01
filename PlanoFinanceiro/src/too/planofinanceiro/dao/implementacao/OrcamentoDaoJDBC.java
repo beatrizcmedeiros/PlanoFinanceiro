@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
-import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.Orcamento;
 import too.planofinanceiro.entidades.TabelaOrcamento;
 
@@ -42,7 +42,7 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			st.executeUpdate();
 	
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Insere Orçamento");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -69,7 +69,7 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			st.executeUpdate();
 	
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Atualiza Orçamento");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -101,7 +101,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca Completa");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -128,7 +129,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca Por Mes e Ano da Despesa");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -164,7 +166,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca Por Mes, Ano e Categoria");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -172,7 +175,7 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 		}
 	}
 	
-	public List<TabelaOrcamento> buscaCompletaPorMes() {
+	public List<TabelaOrcamento> buscaCompletaPorMes(int mes) {
 		PreparedStatement st = null;
 		ResultSet rs = null;
 		
@@ -186,7 +189,6 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 					+ " AND EXTRACT(YEAR FROM o.data_pagamento) = ?;");
 			
 			Calendar calendario = Calendar.getInstance();
-	        int mes = calendario.get(Calendar.MONTH) + 1; 
 	        int ano = calendario.get(Calendar.YEAR);
 	        
 			st.setInt(1, mes);
@@ -202,7 +204,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca Completa dos Dados da Tabela por Mês");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -231,7 +234,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca por Data");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -262,7 +266,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca por Descrição");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -291,7 +296,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca por Valor");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -316,7 +322,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 				return rs.getDouble("totalDespesaMes");
 			return 0;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Valor das Despesas Totais Por Mês");
+			return 0;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -342,7 +349,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 				return rs.getDouble("totalPago");
 			return 0;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Total Pago");
+			return 0;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -368,7 +376,8 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 				return rs.getDouble("totalAPagar");
 			return 0;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Total A Pagar");
+			return 0;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -399,10 +408,10 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 		tabelaOrcamento.setDescricao(rs.getString("descricao"));
 		tabelaOrcamento.setValor(rs.getDouble("valor"));
 		
-		if(rs.getString("situacao") == "Paga")
-			tabelaOrcamento.setPaga(true);
-		else
+		if(rs.getString("situacao") == null)
 			tabelaOrcamento.setPaga(false);
+		else
+			tabelaOrcamento.setPaga(true);
 			
 		return tabelaOrcamento;
 	}

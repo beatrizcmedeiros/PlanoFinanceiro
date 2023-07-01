@@ -8,9 +8,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
-import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.FormaDePagamento;
 
 public class FormaDePagamentoDaoJDBC implements Dao<FormaDePagamento> {
@@ -42,15 +42,15 @@ public class FormaDePagamentoDaoJDBC implements Dao<FormaDePagamento> {
 				try {
 					conn.rollback();
 				} catch (SQLException e) {
-					throw new DbException(e.getMessage());
+					InputOutput.showError(e.getMessage(), "Insere Forma de Pagamento");
 				}
-				throw new DbException("Erro: nenhuma linha foi afetada!");
+				InputOutput.showError("Erro: nenhuma linha foi afetada!", "Insere Forma de Pagamento");
 			}
 		} catch (SQLException e) {
 			try {
 				conn.rollback();
 			} catch (SQLException e1) {
-				throw new DbException(e1.getMessage());
+				InputOutput.showError(e1.getMessage(), "Insere Forma de Pagamento");
 			}
 		}
 		finally {
@@ -72,7 +72,7 @@ public class FormaDePagamentoDaoJDBC implements Dao<FormaDePagamento> {
 			st.executeUpdate();
 
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Atualiza Forma de Pagamento");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -97,7 +97,8 @@ public class FormaDePagamentoDaoJDBC implements Dao<FormaDePagamento> {
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Forma de Pagamento: Busca Por ID");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -124,7 +125,8 @@ public class FormaDePagamentoDaoJDBC implements Dao<FormaDePagamento> {
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Forma de Pagamento: Busca Completa");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -149,7 +151,8 @@ public class FormaDePagamentoDaoJDBC implements Dao<FormaDePagamento> {
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Forma de Pagamento: Busca Por Descrição");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);

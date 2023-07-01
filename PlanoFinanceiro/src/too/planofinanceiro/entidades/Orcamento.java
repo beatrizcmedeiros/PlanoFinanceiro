@@ -6,6 +6,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+import mos.io.InputOutput;
+
 public class Orcamento implements Serializable{
 	
 	private static final long serialVersionUID = 1L;
@@ -95,7 +97,7 @@ public class Orcamento implements Serializable{
 	        long milliseconds = utilDate.getTime();
 	        return new java.sql.Date(milliseconds);
 	    } catch (ParseException e) {
-	        e.printStackTrace();
+	    	InputOutput.showError("Erro ao formatar data.", "Orçamento");
 	    }
 	    return null;
 	}
@@ -131,8 +133,9 @@ public class Orcamento implements Serializable{
 		    long milliseconds = cal.getTimeInMillis();
 		    return new java.sql.Date(milliseconds);
 		} catch (ParseException e) {
-		    e.printStackTrace();
+			InputOutput.showError("Erro ao formatar data de pagamento.", "Orçamento");
 		}
 		return null;
 	}	
+	
 }//class Orcamento

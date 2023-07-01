@@ -8,9 +8,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
-import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.Categoria;
 
 public class CategoriaDaoJDBC implements Dao<Categoria>{
@@ -39,10 +39,10 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 					categoria.setCodigo(rs.getInt(1));
 				DB.closeResultSet(rs);
 			}else {
-				throw new DbException("Erro: nenhuma linha foi afetada!");
+				InputOutput.showError("Erro: nenhuma linha foi afetada!", "Insere Categoria");
 			}
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Insere Categoria");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -63,7 +63,7 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 			st.executeUpdate();
 
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Atualiza Categoria");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -88,7 +88,8 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Categoria: Busca Por ID");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -115,7 +116,8 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Categoria: Busca Completa");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -140,7 +142,8 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Categoria: Busca Por Descrição");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -169,7 +172,8 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Categoria: Lista de Descrições");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);

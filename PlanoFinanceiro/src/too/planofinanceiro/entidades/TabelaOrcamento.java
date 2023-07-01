@@ -1,6 +1,9 @@
 package too.planofinanceiro.entidades;
 
 import java.sql.Date;
+import java.text.SimpleDateFormat;
+
+import mos.io.InputOutput;
 
 public class TabelaOrcamento {
 	private Date data;
@@ -69,4 +72,16 @@ public class TabelaOrcamento {
 	public void setPaga(boolean paga) {
 		this.paga = paga;
 	}
-}
+	
+	public String formatarData(Date dt) {
+		SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+
+	    try {
+	        String dataString = formato.format(dt);
+	        return dataString;
+	    } catch (Exception e) {
+	    	InputOutput.showError("Erro ao formatar data.", "Tabela Orçamento");
+	    }
+	    return null;
+	}
+}//class TabelaOrcamento

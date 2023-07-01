@@ -41,9 +41,4 @@ public class Despesa implements Serializable{
 	public void setCodCategoria(int codCategoria) {
 		this.codCategoria = codCategoria;
 	}
-
-	@Override
-	public String toString() {
-		return String.format("codigo: %d descricao: %s cod categoria: %d", codigo, descricao, codCategoria);
-	}
 }//class Despesa

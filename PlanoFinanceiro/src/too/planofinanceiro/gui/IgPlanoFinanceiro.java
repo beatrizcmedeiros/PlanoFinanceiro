@@ -3,12 +3,14 @@ package too.planofinanceiro.gui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Paint;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Ellipse2D;
 import java.io.File;
 import java.sql.Connection;
 import java.text.DecimalFormat;
@@ -32,6 +34,20 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.labels.CategoryItemLabelGenerator;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.ui.RectangleEdge;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.general.DefaultPieDataset;
 
 import mos.reader.Line;
 import too.planofinanceiro.arquivo.Arquivo;
@@ -129,11 +145,12 @@ public class IgPlanoFinanceiro extends JFrame {
 		tableOrcamento.getColumnModel().getColumn(5).setPreferredWidth(73);
 		List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();
 		OrcamentoDaoJDBC orcamentoDao = new OrcamentoDaoJDBC(conn);		
-		lista = orcamentoDao.buscaCompletaPorMes();	
+		lista = orcamentoDao.buscaCompletaPorMes(mes);	
 		DefaultTableModel tableModel = (DefaultTableModel) tableOrcamento.getModel();
 		tableModel.setRowCount(0); 
+		tableOrcamento.getColumnModel().getColumn(5).setCellRenderer(tableOrcamento.getDefaultRenderer(Boolean.class));
 		for (TabelaOrcamento tab : lista) {
-		    Object[] rowData = {tab.getData(), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
+		    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
 		    tableModel.addRow(rowData);
 		}
 		tableOrcamento.setShowHorizontalLines(true);
@@ -195,7 +212,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		lblSaldo.setHorizontalAlignment(SwingConstants.CENTER);
 		lblSaldo.setForeground(new Color(0, 0, 139));
 		lblSaldo.setFont(new Font("Tahoma", Font.BOLD, 17));
-		lblSaldo.setBounds(393, 8, 118, 26);
+		lblSaldo.setBounds(364, 8, 147, 26);
 		InformativoPanel.add(lblSaldo);
 		
 		JLabel lblTotalPago = new JLabel("Total Pago");
@@ -248,7 +265,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		else
 			lblSaldoValor.setForeground(Color.RED);
 		lblSaldoValor.setFont(new Font("Tahoma", Font.BOLD, 20));
-		lblSaldoValor.setBounds(393, 46, 118, 26);
+		lblSaldoValor.setBounds(364, 46, 147, 26);
 		InformativoPanel.add(lblSaldoValor);
 		
 		JLabel lblTotalPagoValor = new JLabel(String.format("R$%.2f", orcamentoDao.totalPago(mes, ano)));
@@ -268,7 +285,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		InformativoPanel.add(lblTotalPagarValor);
 		
 		InvestimentoDaoJDBC investimentoDao = new InvestimentoDaoJDBC(conn);
-		String numeroFormatado = formatador.format(investimentoDao.totalInvestimentos());
+		String numeroFormatado = formatador.format(investimentoDao.totalAcumulado());
 		JLabel lblInvestimentosValor = new JLabel(String.format("R$%s", numeroFormatado));
 		lblInvestimentosValor.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblInvestimentosValor.setHorizontalAlignment(SwingConstants.CENTER);
@@ -277,7 +294,25 @@ public class IgPlanoFinanceiro extends JFrame {
 		lblInvestimentosValor.setBounds(962, 46, 157, 26);
 		InformativoPanel.add(lblInvestimentosValor);
 		
+		JPanel graficoPanel = new JPanel();
+		graficoPanel.setBackground(new Color(255, 255, 255));
+		graficoPanel.setBounds(642,24,499,307);
+		graficoPanel.setLayout(null);
+		orcamentoPanel.add(graficoPanel);
+		
+		List<TabelaOrcamento> listaTabOrcamento = new ArrayList<TabelaOrcamento>();				
+		listaTabOrcamento = orcamentoDao.buscaCompletaPorMes(mes);
+		
+		ChartPanel chartGrafico = new ChartPanel(geraGraficoPizza(listaTabOrcamento, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
+		chartGrafico.setMouseZoomable(false);
+		chartGrafico.setBounds(0, 0, 497, 301);
+		chartGrafico.setBackground(new Color(255, 255, 255));
+		graficoPanel.add(chartGrafico);
+		chartGrafico.setBorder(null);
+		chartGrafico.setLayout(null);
+		
 		JComboBox<String> comboBoxMes = new JComboBox<String>();
+		JComboBox<String> comboBoxCategoria = new JComboBox<String>();
 		comboBoxMes.setMaximumRowCount(12);
 		comboBoxMes.setModel(new DefaultComboBoxModel<String>(new String[] {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"}));
 		comboBoxMes.setSelectedIndex(mes-1);
@@ -287,8 +322,9 @@ public class IgPlanoFinanceiro extends JFrame {
 					int mes = comboBoxMes.getSelectedIndex() + 1;
 					Calendar calendario = Calendar.getInstance();
 					int ano = calendario.get(Calendar.YEAR);
-							           
-							           
+					
+					comboBoxCategoria.setSelectedIndex(0);
+					
 					lblReceitasValor.setText(String.format("R$%.2f", rendaMesalDao.valorReceitaTotalPorMes(mes, ano)));
 						
 					lblDespesasValor.setText(String.format("R$%.2f", orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
@@ -301,8 +337,24 @@ public class IgPlanoFinanceiro extends JFrame {
 					lblTotalPagarValor.setText(String.format("R$%.2f", orcamentoDao.totalAPagar(mes, ano)));
 						
 					InvestimentoDaoJDBC investimentoDao = new InvestimentoDaoJDBC(conn);
-					String numeroFormatado = formatador.format(investimentoDao.totalInvestimentos());
+					String numeroFormatado = formatador.format(investimentoDao.totalAcumulado());
 					lblInvestimentosValor.setText(String.format("R$%s", numeroFormatado));		
+					
+					List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();				
+					lista = orcamentoDao.buscaCompletaPorMes(mes);
+					
+					chartGrafico.setChart(geraGraficoPizza(lista, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
+					
+					DefaultTableModel model = (DefaultTableModel) tableOrcamento.getModel();
+
+					model.setRowCount(0);
+					tableOrcamento.getColumnModel().getColumn(5).setCellRenderer(tableOrcamento.getDefaultRenderer(Boolean.class));
+					for (TabelaOrcamento tab : lista) {
+					    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
+					    model.addRow(rowData);
+					}
+
+					tableOrcamento.repaint();	
 		        }
 			}
 		});
@@ -312,7 +364,6 @@ public class IgPlanoFinanceiro extends JFrame {
 		orcamentoPanel.add(comboBoxMes);
 		
 		
-		JComboBox<String> comboBoxCategoria = new JComboBox<String>();
 		CategoriaDaoJDBC categoriaDao = new CategoriaDaoJDBC(conn);
 		List<String> listaDescricoes = categoriaDao.listaDescricoes();
 		String[] categorias = listaDescricoes.toArray(new String[listaDescricoes.size()]);
@@ -324,25 +375,26 @@ public class IgPlanoFinanceiro extends JFrame {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
 					String categoria = (String) comboBoxCategoria.getSelectedItem();
 					List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();
-					
+					int mes = comboBoxMes.getSelectedIndex() + 1;
+
 					if(categoria != "Todas") {
 						Categoria cat = new Categoria();
 						cat = categoriaDao.buscaPorDescricao(categoria);
 						int idCategoria = cat.getCodigo();
-						int mes = comboBoxMes.getSelectedIndex() + 1;
 						Calendar calendario = Calendar.getInstance();
 						int ano = calendario.get(Calendar.YEAR);
 						
 						lista = orcamentoDao.buscaPorCategoriaEmes(idCategoria, mes, ano);
 					}else 
-						lista = orcamentoDao.buscaCompletaPorMes();
+						lista = orcamentoDao.buscaCompletaPorMes(mes);
 					
 					DefaultTableModel model = (DefaultTableModel) tableOrcamento.getModel();
 
 					model.setRowCount(0);
-
+					tableOrcamento.getColumnModel().getColumn(5).setCellRenderer(tableOrcamento.getDefaultRenderer(Boolean.class));
+					
 					for (TabelaOrcamento tab : lista) {
-					    Object[] rowData = {tab.getData(), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
+					    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
 					    model.addRow(rowData);
 					}
 
@@ -364,6 +416,30 @@ public class IgPlanoFinanceiro extends JFrame {
 		btnInvestimentos.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				new IgInvestimentos(conn);
+			}
+		});
+		
+		btnPesquisarDespesa.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new IgPesquisarDespesa(conn);
+			}
+		});
+		
+		btnGraficoPizza.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();	
+				int mes = comboBoxMes.getSelectedIndex() + 1;
+				lista = orcamentoDao.buscaCompletaPorMes(mes);
+				chartGrafico.setChart(geraGraficoPizza(lista, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
+			}
+		});
+		
+		btnGraficoBarras.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();	
+				int mes = comboBoxMes.getSelectedIndex() + 1;
+				lista = orcamentoDao.buscaCompletaPorMes(mes);
+				chartGrafico.setChart(geraGraficoBarra(lista, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));				
 			}
 		});
 		
@@ -413,4 +489,74 @@ public class IgPlanoFinanceiro extends JFrame {
 			
 		}
 	}
+	
+	protected String formatarDouble(double valor) {
+	    DecimalFormat formato = new DecimalFormat("###,##0.00");
+	    return formato.format(valor);
+	}
+	
+	protected JFreeChart geraGraficoPizza(List<TabelaOrcamento> lista, double despesaMes) {
+		DefaultPieDataset dataset = new DefaultPieDataset();
+		double porcentagem;
+		
+		for(TabelaOrcamento tab : lista) {
+			porcentagem = (tab.getValor()*100)/despesaMes;
+			dataset.setValue(tab.getDescricao(), porcentagem);
+		}
+		
+		JFreeChart chart = ChartFactory.createPieChart("", dataset, true, false, false);
+		
+		PiePlot plot = (PiePlot) chart.getPlot();
+
+		plot.setLegendLabelGenerator(new StandardPieSectionLabelGenerator("{0}"));
+	    plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{2}", new DecimalFormat("0"), new DecimalFormat("0%")));
+	    plot.setLegendItemShape(new Ellipse2D.Double(-4, -4, 8, 8));
+	    chart.getLegend().setPosition(RectangleEdge.LEFT);
+	    plot.setBackgroundPaint(Color.WHITE);
+	    plot.setInteriorGap(0.04);
+        	    
+        chart.getPlot().setOutlineVisible(false);
+        chart.getPlot().setOutlinePaint(null);
+		
+		return chart;
+	}
+	
+	protected JFreeChart geraGraficoBarra(List<TabelaOrcamento> lista, double despesaMes) {
+	    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+	    double porcentagem;
+	    
+	    for(TabelaOrcamento tab : lista) {
+			porcentagem = (tab.getValor()*100)/despesaMes;
+			dataset.addValue(porcentagem, "", tab.getDescricao());
+		}
+	
+	    JFreeChart chart = ChartFactory.createBarChart("", "", "", dataset, PlotOrientation.VERTICAL, false, false, false);
+	    
+        CategoryPlot plot = chart.getCategoryPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        
+        BarRenderer renderer = new BarRenderer() {
+            @Override
+            public Paint getItemPaint(int row, int column) {
+                return getRandomColor();
+            }
+        };
+
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setRangeGridlinePaint(Color.BLACK);        
+        plot.setRenderer(renderer);
+
+        CategoryItemLabelGenerator labelGenerator = new StandardCategoryItemLabelGenerator("{2}%", new DecimalFormat("0.00"), new DecimalFormat("0%"));
+        renderer.setDefaultItemLabelGenerator(labelGenerator);
+        renderer.setDefaultItemLabelsVisible(true);
+        
+	    return chart;
+	}
+
+    private static Color getRandomColor() {
+        int r = (int) (Math.random() * 256);
+        int g = (int) (Math.random() * 256);
+        int b = (int) (Math.random() * 256);
+        return new Color(r, g, b);
+    }
 }//class IgOrcamento

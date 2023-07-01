@@ -7,9 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
+import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
-import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.Renda;
 
 public class RendaDaoJDBC implements Dao<Renda>{
@@ -38,10 +38,10 @@ public class RendaDaoJDBC implements Dao<Renda>{
 					renda.setCodigo(rs.getInt(1));
 				DB.closeResultSet(rs);
 			}else {
-				throw new DbException("Erro: nenhuma linha foi afetada!");
+				InputOutput.showError("Erro: nenhuma linha foi afetada!", "Insere Renda");
 			}
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Insere Renda");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -62,7 +62,7 @@ public class RendaDaoJDBC implements Dao<Renda>{
 			st.executeUpdate();
 			
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Atualiza Renda");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -87,7 +87,8 @@ public class RendaDaoJDBC implements Dao<Renda>{
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Renda: Busca Por ID");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -98,6 +99,32 @@ public class RendaDaoJDBC implements Dao<Renda>{
 	@Override
 	public List<Renda> buscaCompleta() {
 		return null;
+	}
+	
+	public Renda buscaPorDescricao(String descricao) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT codigo, descricao"
+					+ "	FROM renda"
+					+ " WHERE descricao=?;");
+			
+			st.setString(1, descricao);
+			rs = st.executeQuery();
+			
+			if(rs.next()) 
+				return instanciaRenda(rs);
+			
+			return null;
+		}catch (SQLException e) {
+			InputOutput.showError(e.getMessage(), "Renda: Busca Por Descrição");
+			return null;
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}
 	
 	private Renda instanciaRenda(ResultSet rs) throws SQLException {

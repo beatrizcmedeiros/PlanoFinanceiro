@@ -8,9 +8,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
-import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.Despesa;
 
 public class DespesaDaoJDBC implements Dao<Despesa>{
@@ -40,10 +40,10 @@ public class DespesaDaoJDBC implements Dao<Despesa>{
 					despesa.setCodigo(rs.getInt(1));
 				DB.closeResultSet(rs);
 			}else {
-				throw new DbException("Erro: nenhuma linha foi afetada!");
+				InputOutput.showError("Erro: nenhuma linha foi afetada!", "Insere Despesa");
 			}
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Insere Despesa");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -66,7 +66,7 @@ public class DespesaDaoJDBC implements Dao<Despesa>{
 			st.executeUpdate();
 
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Atualiza Despesa");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -92,7 +92,8 @@ public class DespesaDaoJDBC implements Dao<Despesa>{
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Despesa: Busca por ID");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -124,7 +125,8 @@ public class DespesaDaoJDBC implements Dao<Despesa>{
 			
 			return lista;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Despesa: Busca Completa");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);

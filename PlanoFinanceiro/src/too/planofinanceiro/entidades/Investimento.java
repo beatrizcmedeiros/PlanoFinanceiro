@@ -5,6 +5,8 @@ import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import mos.io.InputOutput;
+
 public class Investimento implements Serializable{
 	
 	private static final long serialVersionUID = 1L;
@@ -116,16 +118,20 @@ public class Investimento implements Serializable{
 	        long milliseconds = utilDate.getTime();
 	        return new java.sql.Date(milliseconds);
 	    } catch (ParseException e) {
-	    	e.printStackTrace();
+	    	InputOutput.showError("Erro ao formatar data de vencimento.", "Investimento");
 	    }
 		return null;
 	}
 	
-	@Override
-	public String toString() {
-		return String.format(
-				"Objetivo: %s \nEstrategia: %s \nNome: %s \nValor Investido: %.2d \nPosicao: %.2d \nRendimento Bruto: %.2d \nRentabilidade: %.2f % \nVencimento: %s",
-				objetivo, estrategia, nome, valorInvestido, posicao, rendimentoBruto, rentabilidade, vencimento);
-	}
-	
+	public String formatarData(Date data) {
+		SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+
+	    try {
+	        String vencimentoString = formato.format(data);
+	        return vencimentoString;
+	    } catch (Exception e) {
+	    	InputOutput.showError("Erro ao formatar data.", "Investimento: Formata Data");
+	    }
+	    return null;
+	}	
 }//class Investimento

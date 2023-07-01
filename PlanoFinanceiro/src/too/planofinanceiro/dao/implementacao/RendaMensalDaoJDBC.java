@@ -10,9 +10,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
-import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.RendaMensal;
 
 public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
@@ -38,7 +38,7 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 			st.executeUpdate();
 			
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Insere Renda Mensal");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -61,7 +61,7 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 			st.executeUpdate();
 			
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Atualiza Renda Mensal");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -86,7 +86,8 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Renda Mensal: Busca Por ID");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -119,7 +120,8 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 			
 			return lista;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Renda Mensal: Busca Por Data");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -144,7 +146,8 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 				return rs.getDouble("totalMes");
 			return 0;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Renda Mensal: Receita Total Por Mês");
+			return 0;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -170,7 +173,8 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
             java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
             return sqlDate;
         } catch (ParseException e) {
-        	throw new DbException(e.getMessage());
+        	InputOutput.showError(e.getMessage(), "Renda Mensal: Formata Data");
+			return null;
         }
     }
 }//class RendaMensalDAO

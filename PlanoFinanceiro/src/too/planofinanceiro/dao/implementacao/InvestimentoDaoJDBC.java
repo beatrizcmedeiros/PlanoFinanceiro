@@ -8,9 +8,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
 import too.planofinanceiro.db.DB;
-import too.planofinanceiro.db.DbException;
 import too.planofinanceiro.entidades.Investimento;
 
 public class InvestimentoDaoJDBC implements Dao<Investimento>{
@@ -46,10 +46,10 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 					investimento.setCodigo(rs.getInt(1));
 				DB.closeResultSet(rs);
 			}else {
-				throw new DbException("Erro: nenhuma linha foi afetada!");
+				InputOutput.showError("Erro: nenhuma linha foi afetada!", "Insere Investimento");
 			}	
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Insere Investimento");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -77,7 +77,7 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 			st.executeUpdate();
 			
 		} catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Atualiza Investimento");
 		}
 		finally {
 			DB.closeStatement(st);
@@ -102,7 +102,8 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 			
 			return null;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Investimento: Busca Por ID");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -130,7 +131,8 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 			return lista;
 			
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Investimento: Busca Completa");
+			return null;
 		}
 		finally {
 			DB.closeStatement(st);
@@ -138,7 +140,7 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 		}
 	}
 	
-	public double totalInvestimentos() {
+	public double totalAcumulado() {
 		PreparedStatement st = null;
 		ResultSet rs = null;
 		
@@ -152,7 +154,54 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 				return rs.getDouble("acumulado");
 			return 0;
 		}catch (SQLException e) {
-			throw new DbException(e.getMessage());
+			InputOutput.showError(e.getMessage(), "Total Acumulado");
+			return 0;
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
+	public double totalInvestido() {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT SUM(valor_investido) as acumulado"
+					+ "	FROM investimento;");
+			
+			rs = st.executeQuery();
+			
+			while (rs.next())
+				return rs.getDouble("acumulado");
+			return 0;
+		}catch (SQLException e) {
+			InputOutput.showError(e.getMessage(), "Total Investido");
+			return 0;
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
+	public double rendimentoBruto() {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT SUM(rendimento_bruto) as acumulado"
+					+ "	FROM investimento;");
+			
+			rs = st.executeQuery();
+			
+			while (rs.next())
+				return rs.getDouble("acumulado");
+			return 0;
+		}catch (SQLException e) {
+			InputOutput.showError(e.getMessage(), "Rendimento Bruto");
+			return 0;
 		}
 		finally {
 			DB.closeStatement(st);
