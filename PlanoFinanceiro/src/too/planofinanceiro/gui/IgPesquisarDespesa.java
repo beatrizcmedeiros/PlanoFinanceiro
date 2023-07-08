@@ -1,23 +1,26 @@
 package too.planofinanceiro.gui;
 
 import java.awt.Color;
-import java.sql.Connection;
-
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.Font;
-import javax.swing.JTextField;
-import javax.swing.JRadioButton;
+import java.sql.Connection;
+
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+
+import too.planofinanceiro.util.ValidacoesRegex;
 
 public class IgPesquisarDespesa extends JFrame {
 	private JTextField textFieldItemDespesa;
 	
-	public IgPesquisarDespesa(Connection conn) {
+	public IgPesquisarDespesa(Connection conn, JTable tableOrcamento) {
 		
 		getContentPane().setFont(new Font("Tahoma", Font.PLAIN, 15));
 		getContentPane().setBackground(new Color(255, 255, 255));
@@ -40,6 +43,7 @@ public class IgPesquisarDespesa extends JFrame {
 		
 		textFieldItemDespesa = new JTextField();
 		textFieldItemDespesa.setBounds(134, 9, 235, 28);
+		lblItemDespesa.setLabelFor(textFieldItemDespesa);
 		getContentPane().add(textFieldItemDespesa);
 		textFieldItemDespesa.setColumns(10);
 		
@@ -67,6 +71,11 @@ public class IgPesquisarDespesa extends JFrame {
 		rdbtnValor.setBounds(301, 49, 68, 23);
 		getContentPane().add(rdbtnValor);
 		
+		ButtonGroup buttonGroup = new ButtonGroup();
+		buttonGroup.add(rdbtnData);
+		buttonGroup.add(rdbtnDescricao);
+		buttonGroup.add(rdbtnValor);
+		
 		JButton btnProximaDespesa = new JButton("Próxima Despesa");
 		btnProximaDespesa.setBackground(new Color(255, 255, 255));
 		btnProximaDespesa.setFont(new Font("Tahoma", Font.PLAIN, 13));
@@ -88,8 +97,73 @@ public class IgPesquisarDespesa extends JFrame {
 		btnFechar.setBounds(280, 108, 89, 25);
 		getContentPane().add(btnFechar);
 		
+		JLabel lblNenhumResultado = new JLabel("*Nenhum resultado encontrado.");
+		lblNenhumResultado.setVisible(false);
+		lblNenhumResultado.setForeground(new Color(128, 0, 0));
+		lblNenhumResultado.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		lblNenhumResultado.setBounds(20, 79, 349, 16);
+		getContentPane().add(lblNenhumResultado);
+		
+		btnProximaDespesa.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String searchTerm = textFieldItemDespesa.getText();
+				
+				if (!searchTerm.isEmpty()) {
+					if(ValidacoesRegex.validarData(searchTerm) && rdbtnData.isSelected()) {
+						lblNenhumResultado.setVisible(false);
+						selectNextRow(searchTerm, tableOrcamento, lblNenhumResultado);
+					}else if(ValidacoesRegex.validarString(searchTerm) && rdbtnDescricao.isSelected()){
+						lblNenhumResultado.setVisible(false);
+                    	selectNextRow(searchTerm, tableOrcamento, lblNenhumResultado);
+					}else if(ValidacoesRegex.validarDouble(searchTerm) && rdbtnValor.isSelected()){
+						lblNenhumResultado.setVisible(false);
+                    	selectNextRow(searchTerm, tableOrcamento, lblNenhumResultado);
+                    }else {
+                    	lblNenhumResultado.setText("*Verifique se os dados estão corretos.");
+                    	lblNenhumResultado.setVisible(true);
+                    }
+					
+					if(!rdbtnData.isSelected() && !rdbtnDescricao.isSelected() && !rdbtnValor.isSelected()){
+                    	lblNenhumResultado.setText("*Selecione uma opção de busca.");
+                    	lblNenhumResultado.setVisible(true);
+                    }
+                }else {
+                	lblNenhumResultado.setText("*Informe um item e uma opção de busca.");
+                	lblNenhumResultado.setVisible(true);
+                }
+			}
+		});
+		
+		
 		setResizable(false);
 		getContentPane().setLayout(null);
 		setVisible(true);
+	}
+	
+	private static int lastSelectedRow = -1;
+	
+	private static void selectNextRow(String searchTerm, JTable tableOrcamento, JLabel lblNenhumResultado) {
+	    int rowCount = tableOrcamento.getRowCount();
+	    if (rowCount == 0) {
+	        return;
+	    }
+
+	    int startRow = (lastSelectedRow + 1) % rowCount;
+
+	    for (int i = 0; i < rowCount; i++) {
+	        int rowIndex = (startRow + i) % rowCount;
+
+	        for (int j = 0; j < tableOrcamento.getColumnCount(); j++) {
+	            Object cellValue = tableOrcamento.getValueAt(rowIndex, j);
+	            if (cellValue != null && cellValue.toString().contains(searchTerm)) {
+	                tableOrcamento.setRowSelectionInterval(rowIndex, rowIndex);
+	                lastSelectedRow = rowIndex;
+	                tableOrcamento.scrollRectToVisible(tableOrcamento.getCellRect(rowIndex, 0, true));
+	                return;
+	            }
+	        }
+	    }
+	    lblNenhumResultado.setText("*Nenhum resultado encontrado.");
+	    lblNenhumResultado.setVisible(true);
 	}
 }

@@ -2,6 +2,7 @@ package too.planofinanceiro.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Paint;
 import java.awt.SystemColor;
@@ -9,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Ellipse2D;
 import java.io.File;
@@ -17,10 +19,14 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.EventObject;
 import java.util.List;
+import java.util.Map;
 
+import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -28,12 +34,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -49,6 +58,7 @@ import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
+import mos.io.InputOutput;
 import mos.reader.Line;
 import too.planofinanceiro.arquivo.Arquivo;
 import too.planofinanceiro.arquivo.ArquivoDespesa;
@@ -60,6 +70,7 @@ import too.planofinanceiro.dao.implementacao.OrcamentoDaoJDBC;
 import too.planofinanceiro.dao.implementacao.RendaMensalDaoJDBC;
 import too.planofinanceiro.entidades.Categoria;
 import too.planofinanceiro.entidades.TabelaOrcamento;
+import too.planofinanceiro.util.InsercaoPelaTabela;
 
 public class IgPlanoFinanceiro extends JFrame {
 	private JTable tableOrcamento;
@@ -109,12 +120,14 @@ public class IgPlanoFinanceiro extends JFrame {
 		
 		JLabel lblMes = new JLabel("Mês:");
 		lblMes.setDisplayedMnemonic('M');
+		lblMes.setDisplayedMnemonic(KeyEvent.VK_M);
 		lblMes.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		lblMes.setBounds(40, 29, 32, 16);
 		orcamentoPanel.add(lblMes);
 		
 		JLabel lblCategoria = new JLabel("Categoria:");
 		lblCategoria.setDisplayedMnemonic('C');
+		lblCategoria.setDisplayedMnemonic(KeyEvent.VK_C);
 		lblCategoria.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		lblCategoria.setBounds(184, 29, 60, 16);
 		orcamentoPanel.add(lblCategoria);
@@ -126,11 +139,58 @@ public class IgPlanoFinanceiro extends JFrame {
 		orcamentoPanel.add(TabelaPanel);
 		TabelaPanel.setLayout(new BorderLayout(0,0));
 		
-		tableOrcamento = new JTable();
+        DefaultTableModel tableModel = new DefaultTableModel(colunasTDespesa, 12) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return true;
+            }
+        };
+
+		tableOrcamento = new JTable(tableModel){
+		    @Override
+		    public boolean editCellAt(int row, int column, EventObject e) {
+		        boolean result = super.editCellAt(row, column, e);
+
+		        if (getCellEditor() instanceof DefaultCellEditor && getColumnClass(column) == Boolean.class) {
+		            SwingUtilities.invokeLater(() -> {
+		                if (editorComp != null) {
+		                    editorComp.requestFocusInWindow();
+		                    ((JCheckBox) editorComp).setSelected(!((JCheckBox) editorComp).isSelected());
+		                }
+		            });
+		        }
+
+		        return result;
+		    }
+		};
+		
+		TableCellEditor checkBoxEditor = new DefaultCellEditor(new JCheckBox()) {
+		    @Override
+		    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+		        JCheckBox checkBox = (JCheckBox) super.getTableCellEditorComponent(table, value, isSelected, row, column);
+		        checkBox.setHorizontalAlignment(SwingConstants.CENTER);
+		        return checkBox;
+		    }
+		};
+
+		int lastColumn = tableOrcamento.getColumnCount() - 1;
+		tableOrcamento.getColumnModel().getColumn(lastColumn).setCellEditor(checkBoxEditor);
+		
+        TableCellEditor cellEditor = new DefaultCellEditor(new JTextField()) {
+            @Override
+            public boolean stopCellEditing() {
+                boolean result = super.stopCellEditing();
+                if (tableOrcamento.isEditing()) {
+                	tableOrcamento.getCellEditor().stopCellEditing();
+                }
+                return result;
+            }
+        };
+        tableOrcamento.setDefaultEditor(Object.class, cellEditor);        
 		tableOrcamento.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		tableOrcamento.setSelectionBackground(SystemColor.inactiveCaption);
 		tableOrcamento.setShowVerticalLines(true);
-		tableOrcamento.setModel(new DefaultTableModel(colunasTDespesa, 12));
+		tableOrcamento.setSurrendersFocusOnKeystroke(true);
 		tableOrcamento.getColumnModel().getColumn(0).setResizable(false);
 		tableOrcamento.getColumnModel().getColumn(0).setPreferredWidth(109);
 		tableOrcamento.getColumnModel().getColumn(1).setResizable(false);
@@ -143,23 +203,26 @@ public class IgPlanoFinanceiro extends JFrame {
 		tableOrcamento.getColumnModel().getColumn(4).setPreferredWidth(62);
 		tableOrcamento.getColumnModel().getColumn(5).setResizable(false);
 		tableOrcamento.getColumnModel().getColumn(5).setPreferredWidth(73);
+		
 		List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();
 		OrcamentoDaoJDBC orcamentoDao = new OrcamentoDaoJDBC(conn);		
 		lista = orcamentoDao.buscaCompletaPorMes(mes);	
-		DefaultTableModel tableModel = (DefaultTableModel) tableOrcamento.getModel();
+		
 		tableModel.setRowCount(0); 
 		tableOrcamento.getColumnModel().getColumn(5).setCellRenderer(tableOrcamento.getDefaultRenderer(Boolean.class));
+		
 		for (TabelaOrcamento tab : lista) {
 		    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
 		    tableModel.addRow(rowData);
 		}
 		tableOrcamento.setShowHorizontalLines(true);
-		
-		JScrollPane scrollPane = new JScrollPane(tableOrcamento);
-		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		TabelaPanel.add(scrollPane, BorderLayout.CENTER);
-		
+		tableOrcamento.putClientProperty("JTable.autoStartsEdit", Boolean.TRUE);
+				
+        JScrollPane scrollPane = new JScrollPane(tableOrcamento);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        TabelaPanel.add(scrollPane, BorderLayout.CENTER);
+        
 		JButton btnPesquisarDespesa = new JButton("Pesquisar Despesa");
 		btnPesquisarDespesa.setAutoscrolls(true);
 		btnPesquisarDespesa.setMnemonic('P');
@@ -300,10 +363,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		graficoPanel.setLayout(null);
 		orcamentoPanel.add(graficoPanel);
 		
-		List<TabelaOrcamento> listaTabOrcamento = new ArrayList<TabelaOrcamento>();				
-		listaTabOrcamento = orcamentoDao.buscaCompletaPorMes(mes);
-		
-		ChartPanel chartGrafico = new ChartPanel(geraGraficoPizza(listaTabOrcamento, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
+		ChartPanel chartGrafico = new ChartPanel(geraGraficoPizza(orcamentoDao.buscaCategoriasPorMes(mes), orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
 		chartGrafico.setMouseZoomable(false);
 		chartGrafico.setBounds(0, 0, 497, 301);
 		chartGrafico.setBackground(new Color(255, 255, 255));
@@ -312,7 +372,9 @@ public class IgPlanoFinanceiro extends JFrame {
 		chartGrafico.setLayout(null);
 		
 		JComboBox<String> comboBoxMes = new JComboBox<String>();
+		lblMes.setLabelFor(comboBoxMes);
 		JComboBox<String> comboBoxCategoria = new JComboBox<String>();
+		lblCategoria.setLabelFor(comboBoxCategoria);
 		comboBoxMes.setMaximumRowCount(12);
 		comboBoxMes.setModel(new DefaultComboBoxModel<String>(new String[] {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"}));
 		comboBoxMes.setSelectedIndex(mes-1);
@@ -340,15 +402,16 @@ public class IgPlanoFinanceiro extends JFrame {
 					String numeroFormatado = formatador.format(investimentoDao.totalAcumulado());
 					lblInvestimentosValor.setText(String.format("R$%s", numeroFormatado));		
 					
-					List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();				
-					lista = orcamentoDao.buscaCompletaPorMes(mes);
 					
-					chartGrafico.setChart(geraGraficoPizza(lista, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
+					chartGrafico.setChart(geraGraficoPizza(orcamentoDao.buscaCategoriasPorMes(mes), rendaMesalDao.valorReceitaTotalPorMes(mes, ano)));
 					
 					DefaultTableModel model = (DefaultTableModel) tableOrcamento.getModel();
 
 					model.setRowCount(0);
 					tableOrcamento.getColumnModel().getColumn(5).setCellRenderer(tableOrcamento.getDefaultRenderer(Boolean.class));
+					
+					List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();				
+					lista = orcamentoDao.buscaCompletaPorMes(mes);
 					for (TabelaOrcamento tab : lista) {
 					    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
 					    model.addRow(rowData);
@@ -398,6 +461,13 @@ public class IgPlanoFinanceiro extends JFrame {
 					    model.addRow(rowData);
 					}
 
+					if(categoria != "Todas") {
+						int quantidadeLinhas = 3;
+					    for (int i = 0; i < quantidadeLinhas; i++) {
+					        model.addRow(new Object[]{});
+					    }
+					}
+			        
 					tableOrcamento.repaint();	
 				}
 			}
@@ -406,6 +476,48 @@ public class IgPlanoFinanceiro extends JFrame {
 		comboBoxCategoria.setBackground(Color.WHITE);
 		comboBoxCategoria.setBounds(247, 24, 99, 26);
 		orcamentoPanel.add(comboBoxCategoria);
+		
+		tableOrcamento.addKeyListener(new KeyAdapter() {
+		    @Override
+		    public void keyPressed(KeyEvent e) {
+		        int row = tableOrcamento.getSelectedRow();
+		        int column = tableOrcamento.getSelectedColumn();
+
+		        if ((e.getKeyCode() == KeyEvent.VK_TAB || e.getKeyCode() == KeyEvent.VK_ENTER) && column == tableOrcamento.getColumnCount() - 1) {
+		            TableCellEditor cellEditor = tableOrcamento.getCellEditor(row, column);
+		            if (cellEditor != null) 
+		                cellEditor.stopCellEditing();
+		            
+		        	String categoria = (String) comboBoxCategoria.getSelectedItem();
+		        	int mesSelecionado = comboBoxMes.getSelectedIndex() + 1;
+			    	if(categoria != "Todas") {
+			            Object[] rowData = new Object[tableModel.getColumnCount()];
+			            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+			                rowData[i] = tableModel.getValueAt(row, i);
+			            }
+			            
+			            List<String> dados = new ArrayList<>();
+			            
+			            dados.add(rowData[0].toString());
+			            dados.add(rowData[1].toString()+"/"+mesSelecionado);
+			            dados.add(rowData[2].toString());
+			            dados.add(rowData[3].toString());
+			            dados.add(categoria);
+			            dados.add(rowData[4].toString());
+			            if(rowData.length == 6) {
+			            	dados.add("Paga");
+			            }else {
+			            	dados.add("");
+			            }
+			            
+			            System.out.println(dados.toString());
+			            InsercaoPelaTabela.importarDadosDespesa(conn, dados);
+			    	}else {
+			    		InputOutput.showInfo("Para fazer alguma alteração é necessário selecionar uma categoria.", "Alterar linha");
+			    	}
+		        }
+		    }
+		});
 		
 		btnImportar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -421,28 +533,24 @@ public class IgPlanoFinanceiro extends JFrame {
 		
 		btnPesquisarDespesa.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				new IgPesquisarDespesa(conn);
+				new IgPesquisarDespesa(conn, tableOrcamento);
 			}
 		});
 		
 		btnGraficoPizza.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();	
 				int mes = comboBoxMes.getSelectedIndex() + 1;
-				lista = orcamentoDao.buscaCompletaPorMes(mes);
-				chartGrafico.setChart(geraGraficoPizza(lista, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
+				chartGrafico.setChart(geraGraficoPizza(orcamentoDao.buscaCategoriasPorMes(mes), rendaMesalDao.valorReceitaTotalPorMes(mes, ano)));
 			}
 		});
 		
 		btnGraficoBarras.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();	
+			public void actionPerformed(ActionEvent e) {	
 				int mes = comboBoxMes.getSelectedIndex() + 1;
-				lista = orcamentoDao.buscaCompletaPorMes(mes);
-				chartGrafico.setChart(geraGraficoBarra(lista, orcamentoDao.valorDespesaTotalPorMes(mes, ano)));				
+				chartGrafico.setChart(geraGraficoBarra(orcamentoDao.buscaCategoriasPorMes(mes), rendaMesalDao.valorReceitaTotalPorMes(mes, ano)));				
 			}
 		});
-		
+				
 		setResizable(false);
 		getContentPane().setLayout(null);
 		setVisible(true);
@@ -465,6 +573,7 @@ public class IgPlanoFinanceiro extends JFrame {
 	    }
 	}//selecionarArquivos()
 	
+	
 	//1 para arquivo de receita, 2 para despesa, 3 para investimento
 	protected void importarArquivos(Connection conn, File[] files) {
 		Arquivo arq = new Arquivo();
@@ -472,21 +581,24 @@ public class IgPlanoFinanceiro extends JFrame {
 		for(File f : files) {
 			List<Line> linhasArquivo = arq.importar(f.getAbsolutePath());
 			
-			int tipo = arq.definirTipoArquivo(linhasArquivo);
-			
-			if(tipo == 1) {
-				ArquivoReceita arqReceita = new ArquivoReceita(); 
-				arqReceita.importarDadosReceita(conn, linhasArquivo);
-			}
-			if(tipo == 2) {
-				ArquivoDespesa arqDespesa = new ArquivoDespesa(); 
-				arqDespesa.importarDadosDespesa(conn, linhasArquivo);
-			}
-			if(tipo == 3) {
-				ArquivoInvestimento arqInvestimento = new ArquivoInvestimento(); 
-				arqInvestimento.importarDadosInvestimento(conn, linhasArquivo);
-			}
-			
+			if (f.getName().endsWith(".csv")) {
+				int tipo = arq.definirTipoArquivo(linhasArquivo);
+				
+				if(tipo == 1) {
+					ArquivoReceita arqReceita = new ArquivoReceita(); 
+					arqReceita.importarDadosReceita(conn, linhasArquivo);
+				}
+				if(tipo == 2) {
+					ArquivoDespesa arqDespesa = new ArquivoDespesa(); 
+					arqDespesa.importarDadosDespesa(conn, linhasArquivo);
+				}
+				if(tipo == 3) {
+					ArquivoInvestimento arqInvestimento = new ArquivoInvestimento(); 
+					arqInvestimento.importarDadosInvestimento(conn, linhasArquivo);
+				}
+	        } else {
+	            InputOutput.showError("O arquivo não é um arquivo CSV.", "Importação do arquivo");
+	        }
 		}
 	}
 	
@@ -495,13 +607,13 @@ public class IgPlanoFinanceiro extends JFrame {
 	    return formato.format(valor);
 	}
 	
-	protected JFreeChart geraGraficoPizza(List<TabelaOrcamento> lista, double despesaMes) {
+	protected JFreeChart geraGraficoPizza(Map<String, Double> categorias, double receitaMes) {
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		double porcentagem;
 		
-		for(TabelaOrcamento tab : lista) {
-			porcentagem = (tab.getValor()*100)/despesaMes;
-			dataset.setValue(tab.getDescricao(), porcentagem);
+		for(String key : categorias.keySet()) {
+			porcentagem = (categorias.get(key)*100)/receitaMes;
+			dataset.setValue(key, porcentagem);
 		}
 		
 		JFreeChart chart = ChartFactory.createPieChart("", dataset, true, false, false);
@@ -521,13 +633,13 @@ public class IgPlanoFinanceiro extends JFrame {
 		return chart;
 	}
 	
-	protected JFreeChart geraGraficoBarra(List<TabelaOrcamento> lista, double despesaMes) {
+	protected JFreeChart geraGraficoBarra(Map<String, Double> categorias, double receitaMes) {
 	    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 	    double porcentagem;
 	    
-	    for(TabelaOrcamento tab : lista) {
-			porcentagem = (tab.getValor()*100)/despesaMes;
-			dataset.addValue(porcentagem, "", tab.getDescricao());
+	    for(String key : categorias.keySet()) {
+			porcentagem = (categorias.get(key)*100)/receitaMes;
+			dataset.addValue(porcentagem, "", key);
 		}
 	
 	    JFreeChart chart = ChartFactory.createBarChart("", "", "", dataset, PlotOrientation.VERTICAL, false, false, false);
@@ -560,3 +672,4 @@ public class IgPlanoFinanceiro extends JFrame {
         return new Color(r, g, b);
     }
 }//class IgOrcamento
+

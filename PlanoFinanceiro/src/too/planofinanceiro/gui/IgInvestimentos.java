@@ -69,11 +69,22 @@ public class IgInvestimentos extends JFrame {
 		TabelaPanel.setBounds(26, 31, 1130, 294);
 		orcamentoPanel.add(TabelaPanel);
 		
+		DefaultTableModel tableModel = new DefaultTableModel(colunasTInvestimento, 8) {
+            boolean[] canEdit = new boolean[]{
+                    true, true, true, true, true, false, false, true
+            };
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return canEdit[column];
+            }
+        };
+		
 		tableInvestimento = new JTable();
 		tableInvestimento.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		tableInvestimento.setSelectionBackground(SystemColor.inactiveCaption);
 		tableInvestimento.setShowVerticalLines(true);
-		tableInvestimento.setModel(new DefaultTableModel(colunasTInvestimento, 8));
+		tableInvestimento.setModel(tableModel);
 		tableInvestimento.getColumnModel().getColumn(0).setPreferredWidth(105);
 		tableInvestimento.getColumnModel().getColumn(0).setResizable(false);
 		tableInvestimento.getColumnModel().getColumn(1).setPreferredWidth(90);
@@ -93,7 +104,7 @@ public class IgInvestimentos extends JFrame {
 		List<Investimento> lista = new ArrayList<Investimento>();
 		InvestimentoDaoJDBC investimentoDao = new InvestimentoDaoJDBC(conn);		
 		lista = investimentoDao.buscaCompleta();	
-		DefaultTableModel tableModel = (DefaultTableModel) tableInvestimento.getModel();
+		tableModel = (DefaultTableModel) tableInvestimento.getModel();
 		tableModel.setRowCount(0); 
 		for (Investimento tab : lista) {
 		    Object[] rowData = {tab.getObjetivo(), tab.getEstrategia(), tab.getNome(), 
@@ -102,6 +113,10 @@ public class IgInvestimentos extends JFrame {
 		    		String.format("%.2f%%", tab.getRentabilidade()), tab.formatarData(tab.getVencimento())};
 		    tableModel.addRow(rowData);
 		}
+		int quantidadeLinhas = 10;
+	    for (int i = 0; i < quantidadeLinhas; i++) {
+	    	tableModel.addRow(new Object[]{});
+	    }
 		TabelaPanel.setLayout(new BorderLayout(0, 0));
 		tableInvestimento.setShowHorizontalLines(true);
 		

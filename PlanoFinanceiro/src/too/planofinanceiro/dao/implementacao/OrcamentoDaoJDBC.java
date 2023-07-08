@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import mos.io.InputOutput;
 import too.planofinanceiro.dao.Dao;
@@ -297,6 +299,44 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 			
 		}catch (SQLException e) {
 			InputOutput.showError(e.getMessage(), "Orçamento: Busca por Valor");
+			return null;
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+	
+	public Map<String, Double> buscaCategoriasPorMes(int mes) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT c.descricao, SUM(o.valor) AS total_gasto"
+					+ " FROM despesa d"
+					+ " JOIN orcamento o ON d.codigo = o.cod_despesa"
+					+ " JOIN categoria c ON d.cod_categoria = c.codigo"
+					+ " WHERE EXTRACT(MONTH FROM o.data_pagamento) = ?"
+					+ "  AND EXTRACT(YEAR FROM o.data_pagamento) = ?"
+					+ " GROUP BY d.cod_categoria, c.descricao;");
+			
+			Calendar calendario = Calendar.getInstance();
+	        int ano = calendario.get(Calendar.YEAR);
+	        
+			st.setInt(1, mes);
+			st.setInt(2, ano);
+			
+			rs = st.executeQuery();
+			
+			Map<String, Double> categorias = new TreeMap<>();
+			
+			while(rs.next()) 
+				categorias.put(rs.getString("descricao"), rs.getDouble("total_gasto"));
+			
+			return categorias;
+			
+		}catch (SQLException e) {
+			InputOutput.showError(e.getMessage(), "Orçamento: Busca Completa dos Dados da Tabela por Categoria");
 			return null;
 		}
 		finally {
