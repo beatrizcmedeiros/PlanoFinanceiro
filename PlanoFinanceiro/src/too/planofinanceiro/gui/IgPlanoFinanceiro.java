@@ -70,11 +70,11 @@ import too.planofinanceiro.dao.implementacao.OrcamentoDaoJDBC;
 import too.planofinanceiro.dao.implementacao.RendaMensalDaoJDBC;
 import too.planofinanceiro.entidades.Categoria;
 import too.planofinanceiro.entidades.TabelaOrcamento;
-import too.planofinanceiro.util.InsercaoPelaTabela;
+import too.planofinanceiro.util.InsereAlteraOrcamentoPelaTabela;
 
 public class IgPlanoFinanceiro extends JFrame {
 	private JTable tableOrcamento;
-
+	
 	public IgPlanoFinanceiro(Connection conn) {
 		String[] colunasTDespesa = {"Data", "Dia", "Tipo", "Descrição", "Valor", "Paga"};
 		
@@ -200,7 +200,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		tableOrcamento.getColumnModel().getColumn(3).setResizable(false);
 		tableOrcamento.getColumnModel().getColumn(3).setPreferredWidth(231);
 		tableOrcamento.getColumnModel().getColumn(4).setResizable(false);
-		tableOrcamento.getColumnModel().getColumn(4).setPreferredWidth(62);
+		tableOrcamento.getColumnModel().getColumn(4).setPreferredWidth(80);
 		tableOrcamento.getColumnModel().getColumn(5).setResizable(false);
 		tableOrcamento.getColumnModel().getColumn(5).setPreferredWidth(73);
 		
@@ -212,7 +212,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		tableOrcamento.getColumnModel().getColumn(5).setCellRenderer(tableOrcamento.getDefaultRenderer(Boolean.class));
 		
 		for (TabelaOrcamento tab : lista) {
-		    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
+		    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), formatador.format(tab.getValor()), tab.isPaga()};
 		    tableModel.addRow(rowData);
 		}
 		tableOrcamento.setShowHorizontalLines(true);
@@ -267,7 +267,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		lblDespesas.setHorizontalAlignment(SwingConstants.CENTER);
 		lblDespesas.setForeground(new Color(0, 0, 139));
 		lblDespesas.setFont(new Font("Tahoma", Font.BOLD, 17));
-		lblDespesas.setBounds(185, 8, 118, 26);
+		lblDespesas.setBounds(185, 8, 147, 26);
 		InformativoPanel.add(lblDespesas);
 		
 		JLabel lblSaldo = new JLabel("Saldo");
@@ -275,7 +275,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		lblSaldo.setHorizontalAlignment(SwingConstants.CENTER);
 		lblSaldo.setForeground(new Color(0, 0, 139));
 		lblSaldo.setFont(new Font("Tahoma", Font.BOLD, 17));
-		lblSaldo.setBounds(364, 8, 147, 26);
+		lblSaldo.setBounds(344, 8, 167, 26);
 		InformativoPanel.add(lblSaldo);
 		
 		JLabel lblTotalPago = new JLabel("Total Pago");
@@ -283,7 +283,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		lblTotalPago.setHorizontalAlignment(SwingConstants.CENTER);
 		lblTotalPago.setForeground(new Color(0, 0, 139));
 		lblTotalPago.setFont(new Font("Tahoma", Font.BOLD, 17));
-		lblTotalPago.setBounds(611, 8, 123, 26);
+		lblTotalPago.setBounds(544, 8, 190, 26);
 		InformativoPanel.add(lblTotalPago);
 		
 		JLabel lblTotalPagar = new JLabel("Total A Pagar");
@@ -291,7 +291,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		lblTotalPagar.setHorizontalAlignment(SwingConstants.CENTER);
 		lblTotalPagar.setForeground(new Color(0, 0, 139));
 		lblTotalPagar.setFont(new Font("Tahoma", Font.BOLD, 17));
-		lblTotalPagar.setBounds(763, 8, 129, 26);
+		lblTotalPagar.setBounds(763, 8, 157, 26);
 		InformativoPanel.add(lblTotalPagar);
 		
 		JLabel lblInvestimentos = new JLabel("Investimentos");
@@ -303,7 +303,7 @@ public class IgPlanoFinanceiro extends JFrame {
 		InformativoPanel.add(lblInvestimentos);
 		
 		RendaMensalDaoJDBC rendaMesalDao = new RendaMensalDaoJDBC(conn);
-		JLabel lblReceitasValor = new JLabel(String.format("R$%.2f", rendaMesalDao.valorReceitaTotalPorMes(mes, ano)));
+		JLabel lblReceitasValor = new JLabel(String.format("R$%s", formatador.format(rendaMesalDao.valorReceitaTotalPorMes(mes, ano))));
 		lblReceitasValor.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblReceitasValor.setHorizontalAlignment(SwingConstants.CENTER);
 		lblReceitasValor.setForeground(new Color(0, 0, 0));
@@ -311,16 +311,16 @@ public class IgPlanoFinanceiro extends JFrame {
 		lblReceitasValor.setBounds(46, 46, 118, 26);
 		InformativoPanel.add(lblReceitasValor);
 		
-		JLabel lblDespesasValor = new JLabel(String.format("R$%.2f", orcamentoDao.valorDespesaTotalPorMes(mes, ano)));
+		JLabel lblDespesasValor = new JLabel(String.format("R$%s", formatador.format(orcamentoDao.valorDespesaTotalPorMes(mes, ano))));
 		lblDespesasValor.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblDespesasValor.setHorizontalAlignment(SwingConstants.CENTER);
 		lblDespesasValor.setForeground(Color.BLACK);
 		lblDespesasValor.setFont(new Font("Tahoma", Font.BOLD, 20));
-		lblDespesasValor.setBounds(185, 46, 118, 26);
+		lblDespesasValor.setBounds(185, 46, 147, 26);
 		InformativoPanel.add(lblDespesasValor);
 		
 		double saldo = rendaMesalDao.valorReceitaTotalPorMes(mes, ano) - orcamentoDao.valorDespesaTotalPorMes(mes, ano);
-		JLabel lblSaldoValor = new JLabel(String.format("R$%.2f", saldo));
+		JLabel lblSaldoValor = new JLabel(String.format("R$%s", formatador.format(saldo)));
 		lblSaldoValor.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblSaldoValor.setHorizontalAlignment(SwingConstants.CENTER);
 		if(saldo > 0)
@@ -328,23 +328,23 @@ public class IgPlanoFinanceiro extends JFrame {
 		else
 			lblSaldoValor.setForeground(Color.RED);
 		lblSaldoValor.setFont(new Font("Tahoma", Font.BOLD, 20));
-		lblSaldoValor.setBounds(364, 46, 147, 26);
+		lblSaldoValor.setBounds(354, 46, 157, 26);
 		InformativoPanel.add(lblSaldoValor);
 		
-		JLabel lblTotalPagoValor = new JLabel(String.format("R$%.2f", orcamentoDao.totalPago(mes, ano)));
+		JLabel lblTotalPagoValor = new JLabel(String.format("R$%s", formatador.format(orcamentoDao.totalPago(mes, ano))));
 		lblTotalPagoValor.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblTotalPagoValor.setHorizontalAlignment(SwingConstants.CENTER);
 		lblTotalPagoValor.setForeground(Color.BLACK);
 		lblTotalPagoValor.setFont(new Font("Tahoma", Font.BOLD, 20));
-		lblTotalPagoValor.setBounds(611, 46, 123, 26);
+		lblTotalPagoValor.setBounds(544, 46, 190, 26);
 		InformativoPanel.add(lblTotalPagoValor);
 		
-		JLabel lblTotalPagarValor = new JLabel(String.format("R$%.2f", orcamentoDao.totalAPagar(mes, ano)));
+		JLabel lblTotalPagarValor = new JLabel(String.format("R$%s", formatador.format(orcamentoDao.totalAPagar(mes, ano))));
 		lblTotalPagarValor.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblTotalPagarValor.setHorizontalAlignment(SwingConstants.CENTER);
 		lblTotalPagarValor.setForeground(Color.BLACK);
 		lblTotalPagarValor.setFont(new Font("Tahoma", Font.BOLD, 20));
-		lblTotalPagarValor.setBounds(763, 46, 129, 26);
+		lblTotalPagarValor.setBounds(763, 46, 157, 26);
 		InformativoPanel.add(lblTotalPagarValor);
 		
 		InvestimentoDaoJDBC investimentoDao = new InvestimentoDaoJDBC(conn);
@@ -413,7 +413,7 @@ public class IgPlanoFinanceiro extends JFrame {
 					List<TabelaOrcamento> lista = new ArrayList<TabelaOrcamento>();				
 					lista = orcamentoDao.buscaCompletaPorMes(mes);
 					for (TabelaOrcamento tab : lista) {
-					    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
+					    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), formatador.format(tab.getValor()), tab.isPaga()};
 					    model.addRow(rowData);
 					}
 
@@ -457,12 +457,12 @@ public class IgPlanoFinanceiro extends JFrame {
 					tableOrcamento.getColumnModel().getColumn(5).setCellRenderer(tableOrcamento.getDefaultRenderer(Boolean.class));
 					
 					for (TabelaOrcamento tab : lista) {
-					    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), tab.getValor(), tab.isPaga()};
+					    Object[] rowData = {tab.formatarData(tab.getData()), tab.getDia(), tab.getTipo(), tab.getDescricao(), formatador.format(tab.getValor()), tab.isPaga()};
 					    model.addRow(rowData);
 					}
 
 					if(categoria != "Todas") {
-						int quantidadeLinhas = 3;
+						int quantidadeLinhas = 10;
 					    for (int i = 0; i < quantidadeLinhas; i++) {
 					        model.addRow(new Object[]{});
 					    }
@@ -488,33 +488,46 @@ public class IgPlanoFinanceiro extends JFrame {
 		            if (cellEditor != null) 
 		                cellEditor.stopCellEditing();
 		            
-		        	String categoria = (String) comboBoxCategoria.getSelectedItem();
-		        	int mesSelecionado = comboBoxMes.getSelectedIndex() + 1;
-			    	if(categoria != "Todas") {
-			            Object[] rowData = new Object[tableModel.getColumnCount()];
-			            for (int i = 0; i < tableModel.getColumnCount(); i++) {
-			                rowData[i] = tableModel.getValueAt(row, i);
-			            }
-			            
-			            List<String> dados = new ArrayList<>();
-			            
-			            dados.add(rowData[0].toString());
-			            dados.add(rowData[1].toString()+"/"+mesSelecionado);
-			            dados.add(rowData[2].toString());
-			            dados.add(rowData[3].toString());
-			            dados.add(categoria);
-			            dados.add(rowData[4].toString());
-			            if(rowData.length == 6) {
-			            	dados.add("Paga");
-			            }else {
-			            	dados.add("");
-			            }
-			            
-			            System.out.println(dados.toString());
-			            InsercaoPelaTabela.importarDadosDespesa(conn, dados);
-			    	}else {
-			    		InputOutput.showInfo("Para fazer alguma alteração é necessário selecionar uma categoria.", "Alterar linha");
-			    	}
+		            String categoria = (String) comboBoxCategoria.getSelectedItem();
+		            int mesSelecionado = comboBoxMes.getSelectedIndex() + 1;
+		            if (categoria != "Todas") {
+		            	Object[] rowData = new Object[tableModel.getColumnCount()];
+		                for (int i = 0; i < tableModel.getColumnCount(); i++) {
+		                    rowData[i] = tableModel.getValueAt(row, i);
+		                }
+		                
+		                if (!isRowEmpty(rowData)) {
+		                	String[] rowDataAsString = new String[tableModel.getColumnCount()];
+		                    for (int i = 0; i < tableModel.getColumnCount(); i++) {
+		                        rowDataAsString[i] = String.valueOf(tableModel.getValueAt(row, i));
+		                    }		                    
+		                    updateRowInDatabase(conn, rowDataAsString, categoria, mes);
+		                    chartGrafico.setChart(geraGraficoPizza(orcamentoDao.buscaCategoriasPorMes(mes), rendaMesalDao.valorReceitaTotalPorMes(mes, ano)));
+		                    tableModel.fireTableDataChanged();
+		                    
+		                } else {
+				            List<String> dados = new ArrayList<>();
+				            
+				            dados.add(rowData[0].toString());
+				            dados.add(rowData[1].toString()+"/0"+mesSelecionado);
+				            dados.add(rowData[2].toString());
+				            dados.add(rowData[3].toString());
+				            dados.add(categoria);
+				            dados.add(rowData[4].toString());
+				            
+				            if(rowData.length == 6) {
+				            	dados.add("Paga");
+				            }else {
+				            	dados.add("");
+				            }
+				            
+				            InsereAlteraOrcamentoPelaTabela.importarDadosDespesa(conn, dados);
+				            chartGrafico.setChart(geraGraficoPizza(orcamentoDao.buscaCategoriasPorMes(mes), rendaMesalDao.valorReceitaTotalPorMes(mes, ano)));	
+				            tableModel.fireTableDataChanged();
+		                }
+		            } else {
+		                InputOutput.showInfo("Para fazer alguma alteração é necessário selecionar uma categoria.", "Alterar linha");
+		            }
 		        }
 		    }
 		});
@@ -602,9 +615,49 @@ public class IgPlanoFinanceiro extends JFrame {
 		}
 	}
 	
+	private void updateRowInDatabase(Connection conn, String[] newRowData, String categoria, int mes) {
+		List<String> dadosNovos = new ArrayList<>();
+			
+		dadosNovos.add(newRowData[0].toString());
+		dadosNovos.add(newRowData[1].toString()+"/0"+mes);
+		dadosNovos.add(newRowData[2].toString());
+		dadosNovos.add(newRowData[3].toString());
+		dadosNovos.add(categoria);
+		dadosNovos.add(newRowData[4].toString());
+		
+		if(newRowData[5] == "true") {
+			dadosNovos.add("Paga");
+        }else {
+        	dadosNovos.add("");
+        }
+		
+		InsereAlteraOrcamentoPelaTabela.alterarDadosInvestimento(conn, dadosNovos);
+	}
+	
 	protected String formatarDouble(double valor) {
 	    DecimalFormat formato = new DecimalFormat("###,##0.00");
 	    return formato.format(valor);
+	}
+	
+	protected String formatarNumero(Double valor) {
+		DecimalFormat formato = new DecimalFormat("0,000.00");
+		String numeroFormatado = formato.format(valor);
+		if(numeroFormatado.contains(".") || numeroFormatado.contains(",")) {
+			if(numeroFormatado.contains(".")) 
+				numeroFormatado = numeroFormatado.replace(".", "").replace(",", ".");
+			else
+				numeroFormatado = numeroFormatado.replace(",", ".");
+		}
+		return numeroFormatado;
+	}
+	
+	protected boolean isRowEmpty(Object[] rowData) {
+	    for (Object value : rowData) {
+	        if (value != null && !value.toString().isEmpty()) {
+	            return false;
+	        }
+	    }
+	    return true;
 	}
 	
 	protected JFreeChart geraGraficoPizza(Map<String, Double> categorias, double receitaMes) {
@@ -671,5 +724,6 @@ public class IgPlanoFinanceiro extends JFrame {
         int b = (int) (Math.random() * 256);
         return new Color(r, g, b);
     }
+  
 }//class IgOrcamento
 

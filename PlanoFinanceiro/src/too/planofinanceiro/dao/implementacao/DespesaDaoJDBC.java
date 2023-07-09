@@ -51,7 +51,7 @@ public class DespesaDaoJDBC implements Dao<Despesa>{
 	}
 
 	@Override
-	public void atualiza(Despesa despesa) {
+	public void atualiza(Despesa despesa, Despesa novaDespesa) {
 		
 		PreparedStatement st = null;
 		try {
@@ -104,6 +104,32 @@ public class DespesaDaoJDBC implements Dao<Despesa>{
 	@Override
 	public List<Despesa> buscaCompleta() {
 		return null;
+	}
+	
+	public Despesa buscaPorDescricao(String descricao) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement("SELECT codigo, descricao, cod_categoria"
+					+ "	FROM despesa"
+					+ " WHERE descricao=?;");
+			
+			st.setString(1, descricao);
+			rs = st.executeQuery();
+			
+			if(rs.next()) 
+				return instanciaDespesa(rs);
+			
+			return null;
+		}catch (SQLException e) {
+			InputOutput.showError(e.getMessage(), "Despesa: Busca por ID");
+			return null;
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}
 
 	public List<Despesa> buscaPorCategoria(int codCategoria) {

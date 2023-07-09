@@ -57,22 +57,30 @@ public class InvestimentoDaoJDBC implements Dao<Investimento>{
 	}
 
 	@Override
-	public void atualiza(Investimento investimento) {
+	public void atualiza(Investimento investimento, Investimento novoInvestimento) {
 		PreparedStatement st = null;
 		try {
 			st = conn.prepareStatement("UPDATE investimento"
 					+ "	SET objetivo=?, estrategia=?, nome=?, valor_investido=?, posicao=?, rendimento_bruto=?, rentabilidade=?, vencimento=?"
-					+ "	WHERE codigo=?;");
+					+ "	WHERE objetivo=? AND estrategia=? AND nome=? AND valor_investido=? AND posicao=? AND rendimento_bruto=? AND rentabilidade=? AND vencimento=?;");
 			
-			st.setString(1, investimento.getObjetivo());
-			st.setString(2, investimento.getEstrategia());
-			st.setString(3, investimento.getNome());
-			st.setDouble(4, investimento.getValorInvestido());
-			st.setDouble(5, investimento.getPosicao());
-			st.setDouble(6, investimento.getRendimentoBruto());
-			st.setDouble(7, investimento.getRentabilidade());
-			st.setDate(8, investimento.getVencimento());
-			st.setInt(9, investimento.getCodigo());
+			st.setString(1, novoInvestimento.getObjetivo());
+			st.setString(2, novoInvestimento.getEstrategia());
+			st.setString(3, novoInvestimento.getNome());
+			st.setDouble(4, novoInvestimento.getValorInvestido());
+			st.setDouble(5, novoInvestimento.getPosicao());
+			st.setDouble(6, novoInvestimento.getRendimentoBruto());
+			st.setDouble(7, novoInvestimento.getRentabilidade());
+			st.setDate(8, novoInvestimento.getVencimento());
+			
+			st.setString(9, investimento.getObjetivo());
+			st.setString(10, investimento.getEstrategia());
+			st.setString(11, investimento.getNome());
+			st.setDouble(12, investimento.getValorInvestido());
+			st.setDouble(13, investimento.getPosicao());
+			st.setDouble(14, investimento.getRendimentoBruto());
+			st.setDouble(15, investimento.getRentabilidade());
+			st.setDate(16, investimento.getVencimento());
 			
 			st.executeUpdate();
 			

@@ -52,22 +52,40 @@ public class OrcamentoDaoJDBC implements Dao<Orcamento>{
 	}
 
 	@Override
-	public void atualiza(Orcamento orcamento) {
+	public void atualiza(Orcamento orcamento, Orcamento novoOrcamento) {
+	}
+	
+	public void atualiza(Orcamento novoOrcamento) {
 		PreparedStatement st = null;
 		try {
-			st = conn.prepareStatement("UPDATE orcamento"
-					+ "	SET data_despesa=?, data_pagamento=?, cod_forma_pagamento=?, valor=?, situacao=?"
-					+ "	WHERE mes_ano=?"
-					+ " AND cod_despesa=?;");
 			
-			st.setDate(1, orcamento.getDataDespesa());
-			st.setDate(2, orcamento.getDataPagamento());
-			st.setInt(3, orcamento.getCodPagamento());
-			st.setDouble(4, orcamento.getValor());
-			st.setString(5, orcamento.getSituacao());
-			st.setString(6, orcamento.getMesAno());
-			st.setInt(7, orcamento.getCodDespesa());
-			
+			if(novoOrcamento.getSituacao().equalsIgnoreCase("")) {
+				st = conn.prepareStatement("UPDATE orcamento"
+						+ "	SET data_despesa=?, data_pagamento=?, cod_forma_pagamento=?, valor=?, situacao=null"
+						+ "	WHERE mes_ano=? AND cod_despesa=?;");
+				
+				st.setDate(1, novoOrcamento.getDataDespesa());
+				st.setDate(2, novoOrcamento.getDataPagamento());
+				st.setInt(3, novoOrcamento.getCodPagamento());
+				st.setDouble(4, novoOrcamento.getValor());
+				st.setString(5, novoOrcamento.getMesAno());
+				st.setInt(6, novoOrcamento.getCodDespesa());
+
+				System.out.println(st.toString());
+			}else {
+				st = conn.prepareStatement("UPDATE orcamento"
+						+ "	SET data_despesa=?, data_pagamento=?, cod_forma_pagamento=?, valor=?, situacao=?"
+						+ "	WHERE mes_ano=? AND cod_despesa=?;");
+				
+				st.setDate(1, novoOrcamento.getDataDespesa());
+				st.setDate(2, novoOrcamento.getDataPagamento());
+				st.setInt(3, novoOrcamento.getCodPagamento());
+				st.setDouble(4, novoOrcamento.getValor());
+				st.setString(5, novoOrcamento.getSituacao());
+				st.setString(6, novoOrcamento.getMesAno());
+				st.setInt(7, novoOrcamento.getCodDespesa());
+			}
+					
 			st.executeUpdate();
 	
 		} catch (SQLException e) {

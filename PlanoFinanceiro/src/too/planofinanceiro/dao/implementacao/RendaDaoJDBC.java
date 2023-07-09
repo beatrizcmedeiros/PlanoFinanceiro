@@ -49,24 +49,24 @@ public class RendaDaoJDBC implements Dao<Renda>{
 	}
 
 	@Override
-	public void atualiza(Renda renda) {
-		PreparedStatement st = null;
-		try {
-			st = conn.prepareStatement("UPDATE renda"
-					+ "	SET descricao=?"
-					+ "	WHERE codigo=?;");
-			
-			st.setString(1, renda.getDescricao());
-			st.setInt(2, renda.getCodigo());
-			
-			st.executeUpdate();
-			
-		} catch (SQLException e) {
-			InputOutput.showError(e.getMessage(), "Atualiza Renda");
-		}
-		finally {
-			DB.closeStatement(st);
-		}
+	public void atualiza(Renda novaRenda, Renda antigaRenda) {
+//		PreparedStatement st = null;
+//		try {
+//			st = conn.prepareStatement("UPDATE renda"
+//					+ "	SET descricao=?"
+//					+ "	WHERE codigo=?;");
+//			
+//			st.setString(1, novaRenda.getDescricao());
+//			st.setInt(2, novaRenda.getCodigo());
+//			
+//			st.executeUpdate();
+//			
+//		} catch (SQLException e) {
+//			InputOutput.showError(e.getMessage(), "Atualiza Renda");
+//		}
+//		finally {
+//			DB.closeStatement(st);
+//		}
 	}
 
 	@Override

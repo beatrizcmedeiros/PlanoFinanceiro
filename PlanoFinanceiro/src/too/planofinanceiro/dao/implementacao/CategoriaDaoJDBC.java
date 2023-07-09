@@ -50,24 +50,24 @@ public class CategoriaDaoJDBC implements Dao<Categoria>{
 	}
 
 	@Override
-	public void atualiza(Categoria categoria) {
-		PreparedStatement st = null;
-		try {
-			st = conn.prepareStatement("UPDATE categoria"
-					+ "	SET descricao=?"
-					+ "	WHERE codigo=?;");
-			
-			st.setString(1, categoria.getDescricao());
-			st.setInt(2, categoria.getCodigo());
-			
-			st.executeUpdate();
-
-		} catch (SQLException e) {
-			InputOutput.showError(e.getMessage(), "Atualiza Categoria");
-		}
-		finally {
-			DB.closeStatement(st);
-		}
+	public void atualiza(Categoria categoria, Categoria novaCategoria) {
+//		PreparedStatement st = null;
+//		try {
+//			st = conn.prepareStatement("UPDATE categoria"
+//					+ "	SET descricao=?"
+//					+ "	WHERE codigo=?;");
+//			
+//			st.setString(1, categoria.getDescricao());
+//			st.setInt(2, categoria.getCodigo());
+//			
+//			st.executeUpdate();
+//
+//		} catch (SQLException e) {
+//			InputOutput.showError(e.getMessage(), "Atualiza Categoria");
+//		}
+//		finally {
+//			DB.closeStatement(st);
+//		}
 	}
 
 	@Override

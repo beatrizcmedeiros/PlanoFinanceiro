@@ -59,24 +59,24 @@ public class FormaDePagamentoDaoJDBC implements Dao<FormaDePagamento> {
 	}
 
 	@Override
-	public void atualiza(FormaDePagamento formaDePagamento) {
-		PreparedStatement st = null;
-		try {
-			st = conn.prepareStatement("UPDATE forma_pagamento"
-					+ "	SET descricao=?"
-					+ "	WHERE codigo=?;");
-			
-			st.setString(1, formaDePagamento.getDescricao());
-			st.setInt(2, formaDePagamento.getCodigo());
-			
-			st.executeUpdate();
-
-		} catch (SQLException e) {
-			InputOutput.showError(e.getMessage(), "Atualiza Forma de Pagamento");
-		}
-		finally {
-			DB.closeStatement(st);
-		}
+	public void atualiza(FormaDePagamento novaFormaDePagamento, FormaDePagamento antigaFormaDePagamento) {
+//		PreparedStatement st = null;
+//		try {
+//			st = conn.prepareStatement("UPDATE forma_pagamento"
+//					+ "	SET descricao=?"
+//					+ "	WHERE codigo=?;");
+//			
+//			st.setString(1, novaFormaDePagamento.getDescricao());
+//			st.setInt(2, novaFormaDePagamento.getCodigo());
+//			
+//			st.executeUpdate();
+//
+//		} catch (SQLException e) {
+//			InputOutput.showError(e.getMessage(), "Atualiza Forma de Pagamento");
+//		}
+//		finally {
+//			DB.closeStatement(st);
+//		}
 	}
 
 	@Override

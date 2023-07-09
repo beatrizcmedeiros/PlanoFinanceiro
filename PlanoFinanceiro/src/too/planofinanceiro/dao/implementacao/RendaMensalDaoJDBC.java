@@ -46,26 +46,26 @@ public class RendaMensalDaoJDBC implements Dao<RendaMensal>{
 	}
 
 	@Override
-	public void atualiza(RendaMensal rendaMensal) {
-		PreparedStatement st = null;
-		try {
-			st = conn.prepareStatement("UPDATE renda_mensal"
-					+ "	SET valor=?"
-					+ "	WHERE cod_renda=?"
-					+ " AND data=?;");
-			
-			st.setDouble(1, rendaMensal.getValor());
-			st.setInt(2, rendaMensal.getCodRenda());
-			st.setDate(3, rendaMensal.getData());
-			
-			st.executeUpdate();
-			
-		} catch (SQLException e) {
-			InputOutput.showError(e.getMessage(), "Atualiza Renda Mensal");
-		}
-		finally {
-			DB.closeStatement(st);
-		}
+	public void atualiza(RendaMensal rendaMensal, RendaMensal nSovaRendaMensal) {
+//		PreparedStatement st = null;
+//		try {
+//			st = conn.prepareStatement("UPDATE renda_mensal"
+//					+ "	SET valor=?"
+//					+ "	WHERE cod_renda=?"
+//					+ " AND data=?;");
+//			
+//			st.setDouble(1, rendaMensal.getValor());
+//			st.setInt(2, rendaMensal.getCodRenda());
+//			st.setDate(3, rendaMensal.getData());
+//			
+//			st.executeUpdate();
+//			
+//		} catch (SQLException e) {
+//			InputOutput.showError(e.getMessage(), "Atualiza Renda Mensal");
+//		}
+//		finally {
+//			DB.closeStatement(st);
+//		}
 	}
 
 	@Override
